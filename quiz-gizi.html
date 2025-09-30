@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz Gizi Interaktif</title>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Baloo 2', cursive;
+      background: linear-gradient(to bottom right, #d1fae5, #fef9c3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .quiz-container {
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    h1, h2 {
+      margin-bottom: 15px;
+      color: #065f46;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 80%;
+      border-radius: 10px;
+      border: 2px solid #065f46;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    .option {
+      display: block;
+      margin: 10px auto;
+      padding: 12px;
+      width: 80%;
+      border-radius: 15px;
+      border: 2px solid #065f46;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    .option:hover { background: #d1fae5; }
+    .correct { background: #a7f3d0; border-color: #10b981; }
+    .wrong { background: #fecaca; border-color: #ef4444; }
+    #next-btn, #start-btn {
+      background: #16a34a;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      margin-top: 15px;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    #next-btn:hover, #start-btn:hover { background: #065f46; }
+    #timer {
+      font-size: 18px;
+      font-weight: bold;
+      color: #dc2626;
+      margin-bottom: 10px;
+    }
+    #leaderboard {
+      margin-top: 20px;
+      padding: 10px;
+      background: #f0fdf4;
+      border-radius: 10px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h1>🥦 Quiz Gizi 🥕</h1>
+    <div id="start-screen">
+      <input type="text" id="username" placeholder="Masukkan nama kamu" />
+      <button id="start-btn">Mulai Quiz</button>
+    </div>
+
+    <div id="quiz-screen" style="display:none;">
+      <h2 id="question">Pertanyaan</h2>
+      <div id="timer">⏱️ 15</div>
+      <div id="options"></div>
+      <button id="next-btn">Lanjut</button>
+    </div>
+  </div>
+
+  <script>
+    const quizData = [
+      {question:"Zat gizi yang berfungsi utama sebagai sumber energi adalah?", options:["Protein","Karbohidrat","Vitamin","Mineral"], answer:"Karbohidrat"},
+      {question:"Vitamin yang larut dalam air adalah?", options:["Vitamin A","Vitamin D","Vitamin B dan C","Vitamin K"], answer:"Vitamin B dan C"},
+      {question:"Zat besi dalam makanan bermanfaat untuk?", options:["Membentuk hemoglobin","Membentuk energi","Mengatur hormon","Menjaga kesehatan tulang"], answer:"Membentuk hemoglobin"},
+      {question:"Sayuran hijau kaya akan?", options:["Vitamin C","Serat dan zat besi","Lemak","Protein"], answer:"Serat dan zat besi"},
+      {question:"Buah yang kaya vitamin C adalah?", options:["Pisang","Jeruk","Apel","Semangka"], answer:"Jeruk"},
+      {question:"Fungsi protein dalam tubuh adalah?", options:["Sumber energi utama","Membantu pertumbuhan dan perbaikan sel","Mengatur tekanan darah","Mencegah dehidrasi"], answer:"Membantu pertumbuhan dan perbaikan sel"},
+      {question:"Kalsium penting untuk?", options:["Meningkatkan imunitas","Kesehatan tulang dan gigi","Produksi hormon","Mencegah anemia"], answer:"Kesehatan tulang dan gigi"},
+      {question:"Makanan sumber lemak sehat adalah?", options:["Minyak kelapa","Alpukat","Keripik kentang","Permen"], answer:"Alpukat"},
+      {question:"Zat gizi mikro yang membantu pembekuan darah adalah?", options:["Zinc","Vitamin K","Vitamin B12","Magnesium"], answer:"Vitamin K"},
+      {question:"Air minum yang cukup membantu?", options:["Mencerahkan kulit","Membantu metabolisme dan cairan tubuh","Menambah berat badan","Mencegah flu"], answer:"Membantu metabolisme dan cairan tubuh"}
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let username = "";
+    let timer;
+    let timeLeft = 15;
+
+    const startScreen = document.getElementById("start-screen");
+    const quizScreen = document.getElementById("quiz-screen");
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const nextBtn = document.getElementById("next-btn");
+    const startBtn = document.getElementById("start-btn");
+    const usernameInput = document.getElementById("username");
+    const timerEl = document.getElementById("timer");
+
+    startBtn.addEventListener("click", () => {
+      if(usernameInput.value.trim() === ""){
+        alert("Silakan masukkan nama terlebih dahulu!");
+        return;
+      }
+      username = usernameInput.value.trim();
+      startScreen.style.display = "none";
+      quizScreen.style.display = "block";
+      loadQuestion();
+    });
+
+    function loadQuestion() {
+      resetState();
+      let currentQuiz = quizData[currentQuestion];
+      questionEl.innerText = currentQuiz.question;
+
+      currentQuiz.options.forEach(option => {
+        const button = document.createElement("button");
+        button.innerText = option;
+        button.classList.add("option");
+        button.addEventListener("click", () => selectAnswer(button, currentQuiz.answer));
+        optionsEl.appendChild(button);
+      });
+      startTimer();
+    }
+
+    function resetState() {
+      nextBtn.style.display = "none";
+      clearInterval(timer);
+      timeLeft = 15;
+      timerEl.innerText = `⏱️ ${timeLeft}`;
+      while(optionsEl.firstChild){
+        optionsEl.removeChild(optionsEl.firstChild);
+      }
+    }
+
+    function selectAnswer(button, correctAnswer){
+      clearInterval(timer);
+      const options = document.querySelectorAll(".option");
+      options.forEach(btn => {
+        btn.disabled = true;
+        if(btn.innerText === correctAnswer){
+          btn.classList.add("correct");
+        } else if(btn === button && btn.innerText !== correctAnswer){
+          btn.classList.add("wrong");
+        }
+      });
+      if(button.innerText === correctAnswer){
+        score++;
+      }
+      nextBtn.style.display = "block";
+    }
+
+    function startTimer(){
+      timer = setInterval(() => {
+        timeLeft--;
+        timerEl.innerText = `⏱️ ${timeLeft}`;
+        if(timeLeft <= 0){
+          clearInterval(timer);
+          nextBtn.style.display = "block";
+          const options = document.querySelectorAll(".option");
+          options.forEach(btn => btn.disabled = true);
+        }
+      },1000);
+    }
+
+    nextBtn.addEventListener("click", () => {
+      currentQuestion++;
+      if(currentQuestion < quizData.length){
+        loadQuestion();
+      } else {
+        showScore();
+      }
+    });
+
+    function showScore(){
+      resetState();
+      questionEl.innerText = `🎉 Selamat ${username}! Skor kamu: ${score} dari ${quizData.length}`;
+      timerEl.style.display = "none";
+
+      // leaderboard
+      let highScore = localStorage.getItem("quizGiziHighScore") || 0;
+      if(score > highScore){
+        localStorage.setItem("quizGiziHighScore", score);
+        highScore = score;
+      }
+
+      const leaderboard = document.createElement("div");
+      leaderboard.id = "leaderboard";
+      leaderboard.innerHTML = `<h3>🏆 Leaderboard</h3>
+        <p>Skor tertinggi: ${highScore}</p>`;
+      quizScreen.appendChild(leaderboard);
+
+      nextBtn.innerText = "Ulangi Quiz";
+      nextBtn.style.display = "block";
+      nextBtn.addEventListener("click", () => location.reload());
+    }
+  </script>
+</body>
+</html>
