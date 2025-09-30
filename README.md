@@ -1,2 +1,1 @@
-# Syahira-Cahyaningtias-
-Quiz gizi 
+https://syahira.github.io/quiz-gizi/
